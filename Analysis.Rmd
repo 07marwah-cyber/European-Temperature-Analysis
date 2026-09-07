@@ -1,0 +1,345 @@
+---
+title: "An analysis of daily surface air temperature in two European cities"
+author: "Marwah Ahmed"
+date: "25/02/2026"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, results = 'hide')
+
+library(tidyverse)
+library(dplyr)
+
+climate_data <- read.csv("Temperature_data.csv")
+colnames(climate_data) <- c("Year","Month","Day",
+                       "temp_x","temp_y",
+                       "ref_mean_x","ref_var_x")
+head(climate_data)
+str(climate_data)
+summary(climate_data)
+
+# Subsets of data:
+
+# By city:
+climate_data$Date <- as.Date(with(climate_data, paste(Year, Month, Day, sep = "-")))
+cityX_2011 <- subset(climate_data, Year==2011)$temp_x
+cityX_1996 <- subset(climate_data, Year==1996)$temp_x
+cityY_1996 <- subset(climate_data, Year==1996)$temp_y
+cityY_2011 <- subset(climate_data, Year==2011)$temp_y
+
+# 1996 vs 2011
+data_1996 <- climate_data %>% filter(Year == 1996)
+data_2011 <- climate_data %>% filter(Year == 2011)
+
+# August only for 1996 and 2011
+aug_1996 <- climate_data %>% filter(Year == 1996, Month == 8)
+aug_2011 <- climate_data %>% filter(Year == 2011, Month == 8)
+
+# January 2011
+jan_2011 <- climate_data %>% filter(Year == 2011, Month == 1)
+```
+
+# Introduction:
+
+Climate variability and long-term temperature change are central themes in environmental analysis and within recent decades, climate change has received more attention. Therefore, it is sensible to measure this change and evaluate whether the differences are statistically significant rather than the result of chance. We will do this by analysing the current and historical temperature readings in 2 cities.
+
+This study investigates daily average surface air temperature data from 2 cities for the years of 1996 and 2011. In addition to comparing these two European cities (City X and City Y), we are examining whether the cities exhibit statistically different climates. The 2 primary aims of this study are: To explore and visualise temperature patterns in both years using descriptive statistical and graphical analysis and to formally test whether the mean temperatures differ between 1996 and 2011. To achieve this, the analysis mainly employs data explanatory analysis techniques and hypothesis testing. The data set is comprised of 731 daily observations, each observation contains the following variables: Year, Month and Day identifiying the date of measurement, Average daily temperature of City X and City Y measured in degrees celsius and a historical reference mean and variance for City X providing a baseline against which 2011 temperatures may be compared. Using this data we aim to mainly investigate the following questions:
+
+-   Whether the mean temperature in City X in 2011 differs from its historical reference value.
+-   Whether mean temperature in 2011 is higher than in 1996 for each city.
+-   Whether the same conclusion holds when considering August only.
+-   Whether the two cities differ in mean temperature in January and August 2011.
+
+There are various reasons why this study is significant. Analysing temperature variations within different cities statistically help scientists determine if observed variations are consistent with predicted climate behaviour.The data set also offers a chance to apply statistical methods to actual environmental data i.e the inferential testing and descriptive analysis. While non significant data may point towards a natural fluctuation proving that temperature differences are statistically significant, enhancing evidence supporting climate change.
+
+# Method:
+
+## Data cleaning:
+
+Prior to analysis, the data was inspected to ensure that variables were numeric and that there were no missing values. No missing observations were present in any of the temperature readings, so all data was retained. Outlying values were also retained, as they represent genuine daily temperature variation rather than measurement error and therefore form part of the climatic behaviour we are studying.
+
+## Exploratory data analysis:
+
+In addition to this, exploratory analysis was utilised to understand the structure and distribution of the data. Time-series plots were used to visualise daily temperature patterns across the year and to identify seasonal behaviour. Histograms were constructed to examine the distribution of temperatures within each city and year and to assess whether the mean was an appropriate summary measure. Box plots were used to compare temperature levels between years and between cities and to visualise variability and potential extreme values. Furthermore summary statistics were computed for each subset of data including sample size n, sample mean $\bar{x}$, sample standard deviation s and confidence intervals.
+
+## Hypothesis tests:
+
+To formally assess the research questions, hypothesis tests were conducted using t-tests. For any subset of data, the sample mean was used to estimate the population mean temperature and the standard deviation describes variability within this. When comparing 2 cities in our hypothesis tests, the population means are $\mu_{X}$ and $\mu_{Y}$. When we compared 2 years in our hypothesis tests, the population means are denoted by $\mu_{1996}$ and $\mu_{2011}$. Lastly when comparing the mean temperature of City X in 2011 to the historical reference mean, the mean temperature was denoted by $\mu$ and historical reference mean was denoted by $\mu ref$.
+
+To answer our first investigation question, we will be running a one sample T-Test to compare the mean temperature in City X in 2011 with the historical reference mean $\mu ref$ which is 15.22. $$
+H_0: \mu_{2011} = \mu ref
+$$ $$
+H_1: \mu_{2011} \neq  \mu ref 
+$$
+
+Next we wanted to assess whether temperatures increased between 1996 and 2011 hence we conducted 2 independent two-sample T-Tests which were performed separately for each city (X and Y). The null and alternative hypothesis are below. $$
+H_0: \mu_{2011} = \mu_{1996}
+$$ $$
+H_1: \mu_{2011} > \mu_{1996}
+$$
+
+The same hypotheses above were tested using only August observations in order to determine whether any temperature increase is also present during summer conditions in August. $$
+H_0: \mu_{2011}^{Aug} = \mu_{1996}^{Aug}
+$$ $$
+H_1: \mu_{2011}^{Aug} > \mu_{1996}^{Aug}
+$$
+
+Lastly, to assess whether these two cities differ climatically, independent two-sample T-Tests were conducted comparing temperatures between City X and City Y in January 2011 and August 2011. The null and alternative hypothesis below can be used for both January 2011 and August 2011. $$
+H_0: \mu_{X} = \mu_{Y}
+$$ $$
+H_1: \mu_{X} \neq \mu_{Y}
+$$
+
+All of these hypothesis tests were conducted at a significance level of $\alpha$ = 0.05 which corresponds to 95% confidence levels and means the probability of a Type I error (incorrectly rejecting a true null hypothesis) is 5%. For each test, the null hypothesis was rejected when the p-value was less than 0.05. Otherwise, there was insufficient evidence to reject the null hypothesis.
+
+# Results:
+
+## Data visualisation:
+
+To investigate how temperatures differ between years and between the two cities, we begin by examining graphical summaries of the data.
+
+### Time series plot:
+
+```{r fig.width=8, fig.height=3.5}
+
+# Time series plot
+.fig_no <- 0
+fig <- function(title_text){
+  .fig_no <<- .fig_no + 1
+  paste0("Figure ", .fig_no, ": ", title_text)
+}
+
+par(mfrow = c(1, 2))
+cex.main=0.8
+cex.lab=0.8
+cex.axis=0.7
+
+ylim_all <- range(c(data_1996$temp_x, data_1996$temp_y,
+                    data_2011$temp_x, data_2011$temp_y), na.rm=TRUE)
+
+plot(data_1996$temp_x, type="l",
+     ylim=ylim_all, 
+     main=fig("Daily Temperatures in 1996"),
+     xlab="Day of observation",
+     ylab="Temperature (°C)")
+lines(data_1996$temp_y, col="red")
+legend("topright", legend=c("City X","City Y"),
+       col=c("black","red"), lty=1, bty = "n", cex = 0.7)
+
+plot(data_2011$temp_x, type="l",
+     ylim=ylim_all, 
+     main=fig("Daily Temperatures in 2011"),
+     xlab="Day of observation",
+     ylab="Temperature (°C)")
+
+lines(data_2011$temp_y, col="red")
+legend("topright",
+       legend=c("City X","City Y"),
+       col=c("black","red"), lty=1, bty = "n", cex = 0.7)
+```
+
+**Figure 1 and 2**: *Line graphs of daily temperature of city X and City Y in 1996 (top left graph) and 2011 (top right graph)*
+
+Both time series plots (**figure 1 and 2**) demonstrate clear seasonal cycles suggesting a similiar annual climate structure. When comparing the two years, it appears that 2011's temperatures were marginally higher overall, especially in the summer which could suggest that temperatures may have risen with time. In both cities, temperatures in 2011 appear slightly higher overall than in 1996, particularly during the summer period where peak temperatures are greater. This suggests that the average daily temperature may have increased over time, though formal statistical tests are required to determine whether this difference is significant.
+
+The numbers also provide light on whether the climates of the cities differ. For a large portion of the year, particularly in the summer, City Y seems warmer than City X in both years. This could suggest that the two places may have different average temperatures. Furthermore, City X seems to exhibit somewhat higher daily variability, indicating potential variations in climate stability between the two cities. All things considered, the time series plots offer early proof that both cities' temperatures may have risen throughout time and that their climates may differ from one another. The hypothesis tests conducted further in the investigation is motivated by these results.
+
+### Histogram plots:
+
+```{r fig.width=10, fig.height=2.7, cex.main=0.9}
+# Histograms
+par(mfrow = c(1, 2))
+ref_mean <- mean(climate_data$ref_mean_x, na.rm = TRUE)
+hist(cityX_2011, breaks=20,xlim=c(0,35), 
+     main=fig("City X (2011)"),
+     xlab="Temperature (°C)", col="lightblue")
+
+abline(v=mean(cityX_2011), col="red", lwd=2)      # sample mean
+abline(v=ref_mean, col="blue", lwd=2)           # historical mean
+
+hist(cityY_2011, breaks=20,xlim=c(0,35), 
+     main=fig("City Y (2011)"),
+     xlab="Temperature (°C)", col="salmon")
+abline(v=mean(cityY_2011), col="red", lwd=2)
+```
+
+**Figure 3 and 4**: *Histograms of daily temperatures in City X (figure 3) and Y (figure 4) for 2011, with vertical lines showing the sample mean (red) and the historical reference mean (blue).*
+
+The distribution of daily temperatures in City X in 2011 is shown in **Figure 3**. The histogram appears roughly symmetrical, indicating that the mean is an appropriate summary measure. The lines show the sample mean for 2011 and the historical reference mean. The sample mean lies slightly to the right of the reference value, suggesting that temperatures in 2011 may be higher than the historical average. This visual comparison motivates the formal hypothesis test carried out in the next section.
+
+**Figure 4** then shows the distribution of daily temperatures in City Y in 2011. The histogram is also roughly symmetrical supporting the use of the mean for comparison. The sample mean is indicated by a vertical line and lies near the centre of the distribution. Unlike City X, there is no reference value for City Y, so this plot is used primarily to assess the shape and to justify the sample mean used later.
+
+### Box plots:
+```{r fig.width=8.5, fig.height=5.5}
+
+# Box plots
+x_aug_1996 <- na.omit(aug_1996$temp_x)
+x_aug_2011 <- na.omit(aug_2011$temp_x)
+y_aug_1996 <- na.omit(aug_1996$temp_y)
+y_aug_2011 <- na.omit(aug_2011$temp_y)
+x_jan_2011 <- na.omit(jan_2011$temp_x)
+y_jan_2011 <- na.omit(jan_2011$temp_y)
+
+par(mfrow = c(3, 2), cex.names = 1, cex.main = 1.4, las = 1)
+boxplot(cityX_1996, cityX_2011,
+        names=c("1996","2011"),
+        horizontal=TRUE,
+        main=fig("City X: Daily Temperatures by Year"),
+        xlab="Temperature (°C)",
+        col=c("salmon","salmon"))
+
+boxplot(cityY_1996, cityY_2011,
+        names=c("1996","2011"),
+        horizontal=TRUE,
+        main=fig("City Y: Daily Temperatures by Year"),
+        xlab="Temperature (°C)",
+        col=c("salmon","salmon"))
+
+boxplot(x_aug_1996, x_aug_2011,
+        names=c("1996","2011"),
+        horizontal=TRUE,
+        main=fig("City X: August Temperatures by Year"),
+        xlab="Temperature (°C)",
+        col=c("gold","gold"))
+
+boxplot(y_aug_1996, y_aug_2011,
+        names=c("1996","2011"),
+        horizontal=TRUE,
+        main=fig("City Y: August Temperatures by Year"),
+        xlab="Temperature (°C)",
+        col=c("gold","gold"))
+
+boxplot(x_jan_2011,y_jan_2011,
+        names=c("CityX","CityY"), 
+        horizontal=TRUE,
+        col=c("pink","pink"),
+        main=fig("January 2011: City X vs City Y"),
+        xlab="Temperature (°C)")
+
+boxplot(x_aug_2011,y_aug_2011, 
+        names=c("CityX","CityY"), 
+        horizontal=TRUE,
+        col=c("pink","pink"),
+        main=fig("August 2011: City X vs City Y"), 
+        xlab="Temperature (°C)")
+
+```
+
+**Figures 5-10**: *Box plots showing the distributions of daily temperatures used for comparison between years (1996 and 2011), between months (January and August), and between the two cities.*
+
+The **figures 5-10** further highlight differences between the years and months. **Figure 5** shows that the distribution for City X is shifted towards higher values in 2011, suggesting an increase in typical temperature, whereas **Figure 6** shows substantial overlap between years for City Y i.e medians are similiar and inter-quartile range overlaps, indicating that typical temperature levels and variability have remain unchanged between the 2 years. **Figure 7** shows a similar upward shift for City X in summer temperatures, while **Figure 8** again shows only a small difference for City Y. **Figures 9 and 10** compare the two cities directly in January and August 2011. In both figures, City Y shows higher temperatures than City X, with medians and interquartile ranges clearly separated, suggesting that the two cities differ in their typical temperature levels in both winter and summer.
+
+Some potential outliers are visible in the box plots. However, these represent unusually warm or cold days and are expected in climate data, so they were retained in the analysis. Overall, the box plots suggest that temperatures have increased in City X but remained relatively stable in City Y, and that the two cities have different climatic characteristics. These visual patterns are formally assessed using summary statistics and hypothesis tests in the following section.
+
+## Summary statistics:
+
+For City X, the mean temperature in 1996 is 14.55°C with confidence interval (13.99°C, 15.10°C), while in 2011 the mean increases to 15.75°C with confidence interval (15.18°C, 16.32°C). This suggests that City X experienced higher average temperatures in 2011 than in 1996. The 2011 confidence interval lies slightly above the historical reference mean of 15.22°C, providing numerical evidence that temperatures may have increased relative to the reference period. For City Y, the mean temperature is 19.21°C in 1996 and 19.25°C in 2011, with very similar confidence intervals and variances in both years. This indicates little evidence of change in typical temperature in City Y over time.
+
+Seasonally, the statistics show similiar patterns. In City X, the mean August temperature increases from 21.84°C in 1996 to 23.06°C in 2011, suggesting that the increase observed over the full year is also present in summer conditions. In contrast, City Y shows only a small increase in August temperatures. Comparisons between the cities in 2011 show substantial differences in temperature levels, with City Y warmer than City X in both January and August.
+
+Overall, the summary statistics suggest that temperatures increased between 1996 and 2011 in City X but remained stable in City Y, and that City Y is consistently warmer than City X. These results support the patterns observed in the graphical analysis and provide evidence for the hypothesis tests in the next section.
+
+## Hypothesis testing:
+
+To formally assess the research questions, hypothesis tests were carried out using one-sample T-Tests at the 5% significance level. In each case, the observations are assumed to be independent and approximately normally distributed. The exploratory analysis suggests the distributions are roughly symmetric with no extreme skewness, and the sample sizes are reasonably large, so the T-Test is appropriate for these tests. We can therefore proceed with the analysis noting these assumptions.
+
+First, we consider whether the mean temperature in City X in 2011 differs from the historical reference value of $\mu ref = 15.22^\circ C$. The null hypothesis is $( H_0: \mu_{2011} = \mu ref)$, while the alternative hypothesis is $(H_1: \mu_{2011} \neq  \mu ref)$. The resulting p-value is 0.0687, which is greater than 0.05, so we do not reject the null hypothesis. There is therefore insufficient statistical evidence that the mean temperature in City X in 2011 differs from the historical reference value, although the sample mean is slightly higher.
+
+Next, we explore whether mean temperature has increased between 1996 and 2011. For City X we test whether the mean difference between the two years is positive. The null hypothesis is that there is no change in mean temperature ($H_0: \mu_{2011} = \mu_{1996}$), and the alternative hypothesis is that the mean temperature in 2011 is higher ($H_1: \mu_{2011} > \mu_{1996}$). The p-value is 0.00148, so we reject the null hypothesis and conclude that there is strong evidence that temperatures in City X increased between 1996 and 2011. Repeating the same test for City Y gives a p-value of 0.4625. Since this is much larger than 0.05, we do not reject the null hypothesis, indicating that there is no statistical evidence that mean temperature changed in City Y over this period.
+
+We then consider whether the same conclusions hold when only August data are used. For City X the p-value is 0.00039, again providing strong evidence that temperatures in 2011 were higher than in 1996 during the summer months. For City Y, however, the p-value is 0.064, so we again find no strong evidence of an increase. Thus, restricting attention to summer temperatures does not change the overall conclusions.
+
+Finally, we investigate whether the two cities differ climatically in 2011 by comparing their mean temperatures in January and August. In each case the null hypothesis is that the cities have equal mean temperature, and the alternative hypothesis is that the means differ. Both tests produce extremely small p-values, so we reject the null hypothesis in both months. This provides strong evidence that the cities differ in typical temperature levels in both winter and summer, with City Y consistently warmer than City X.
+
+Overall, the hypothesis tests suggest that temperatures have increased over time in City X but remained relatively stable in City Y, and that the two cities differ significantly in their climatic conditions. These conclusions are consistent with the patterns observed in the graphical and summary analysis.
+
+# Conclusion:
+
+This investigation aimed to determine whether daily temperatures have changed over time in two European cities and whether the cities differ in their climatic characteristics. The graphical analysis suggested that temperature distributions in City X were shifted towards higher values in 2011 compared with 1996, while City Y showed substantial overlap between the two years. This trend was corroborated by the summary statistics, which indicated that City X's mean temperature had increased while City Y's had barely changed. These results were validated by hypothesis tests we conducted, which showed no discernible warming in City Y but substantial evidence of temperature increases in City X between 1996 and 2011. In both January and August, tests that directly compared the cities revealed that City Y is consistently warmer than City X. Overall, the research indicates that temperature change is not consistent across locations, with City Y appearing to be relatively unchanged and City X demonstrating evidence of warming.
+
+However there are several limitations to this study. Firstly the data set includes only two individual years (1996 and 2011), which may not fully represent long-term climate trends and could reflect short-term variability rather than true change. As well as this, both cities are from Europe meaning this study cannot be generalised to cities in other parts of the world with different climatic conditions. Secondly, the t-test assumes each observation is independent of others however, climate data often has seasonal patterns i.e heatwaves lasting several days so observations may be slighlt linked so assumption of independence isnt perfectly satisfied. Thirdly, the t-test assumes the data are normally distributed but temperature data may not be perfectly normal due to seasonal variation and extreme values, however the large sample size means the test should still give reliable results. The last limitation is the analysis considers only mean temperature and does not account for other aspects of climate such as variability, extreme events, or other variables. These limitations mean the results should be interpreted cautiously when drawing conclusions about long-term climate change.
+
+Further investigation to test or confirm our conclusions may involve including temperature data from additional years/months/days to better assess long-term trends. As well as this, we could confirm results with non-parametric hypothesis tests such as Mann-Whitney or Wilcoxon, for example Mann-Whitney could be used to compare temperatures without assuming normality. In addition, analysing other climatic variables such as rainfall or extreme temperature events could provide a more complete comparison of the two cities’ climates.
+
+# Appendices:
+
+## Summary statistics:
+
+```{r results='hold'}
+
+# Summary statistics
+summ_ci <- function(x, conf = 0.95){
+  x <- na.omit(x)
+  tt <- t.test(x, conf.level = conf)
+  c(
+    n = length(x),
+    mean = mean(x),
+    var = var(x),
+    ci_low = tt$conf.int[1],
+    ci_high = tt$conf.int[2]
+  )
+}
+
+stats <- rbind(
+  # Full year
+  "City X 1996 (all days)" = summ_ci(cityX_1996),
+  "City X 2011 (all days)" = summ_ci(cityX_2011),
+  "City Y 1996 (all days)" = summ_ci(cityY_1996),
+  "City Y 2011 (all days)" = summ_ci(cityY_2011),
+
+  # August
+  "City X Aug 1996" = summ_ci(x_aug_1996),
+  "City X Aug 2011" = summ_ci(x_aug_2011),
+  "City Y Aug 1996" = summ_ci(y_aug_1996),
+  "City Y Aug 2011" = summ_ci(y_aug_2011),
+
+  # January
+  "City X Jan 2011" = summ_ci(x_jan_2011),
+  "City Y Jan 2011" = summ_ci(y_jan_2011)
+)
+
+stats <- as.data.frame(stats)
+
+# Round results
+stats$mean <- round(stats$mean, 2)
+stats$var <- round(stats$var, 2)
+stats$ci_low <- round(stats$ci_low, 2)
+stats$ci_high <- round(stats$ci_high, 2)
+stats
+```
+
+## Hypothesis test results:
+
+```{r results='hold'}
+#Hypothesis tests:
+
+# a)  City X (2011) vs historical reference mean
+ref_mean <- mean(climate_data$ref_mean_x, na.rm = TRUE)
+t_test_result <- t.test(cityX_2011, mu = ref_mean)
+t_test_result
+
+# b) City X/Y: test if mean(2011) > mean(1996)
+t.test(cityX_2011, cityX_1996, alternative = "greater")
+t.test(cityY_2011, cityY_1996, alternative = "greater")
+
+# c) City X/Y in august: test if mean(2011) > mean(1996)
+t.test(x_aug_2011, x_aug_1996, alternative = "greater")
+
+t.test(y_aug_2011, y_aug_1996, alternative = "greater")
+
+# d) Test whether City X differs from City Y mean in august/january
+x_jan_2011 <- na.omit(jan_2011$temp_x)
+y_jan_2011 <- na.omit(jan_2011$temp_y)
+t.test(x_jan_2011, y_jan_2011)
+
+t.test(x_aug_2011, y_aug_2011)
+
+
+```
+
+## Code:
+
+```{r ref.label=knitr::all_labels(), echo = T, eval = F}
+
+```
