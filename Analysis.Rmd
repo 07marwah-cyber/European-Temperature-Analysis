@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, results = 
 library(tidyverse)
 library(dplyr)
 
-climate_data <- read.csv("Temperature_data.csv")
+climate_data <- read.csv("data/Temperature_data.csv")
 colnames(climate_data) <- c("Year","Month","Day",
                        "temp_x","temp_y",
                        "ref_mean_x","ref_var_x")
