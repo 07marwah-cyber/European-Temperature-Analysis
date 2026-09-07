@@ -1,5 +1,3 @@
-# European-Temperature-Analysis
-Statistical analysis of daily temperature in two European cities using R, including exploratory data analysis, visualisation and hypothesis testing.
 # European Temperature Analysis
 
 A statistical analysis of daily surface air temperature data from two European cities, conducted in R.
